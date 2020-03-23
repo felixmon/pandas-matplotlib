@@ -19,8 +19,8 @@ def data_cleaning(df):
     # take the data less the header row
     df = df[1:]
 
-    # drop the last 16 rows
-    df = df[:-16]
+    # drop the last n rows
+    df = df[:-15]
 
     # set the header row as the df header
     df.columns = new_header
@@ -41,6 +41,7 @@ def data_cleaning(df):
     df.replace(r'三季报',3,inplace=True, regex=True)
     df.replace(r'营业总支出','营业总成本',inplace=True, regex=True)
     df.replace(r'.*净利润.*不含.*','净利润',inplace=True, regex=True)
+    df.replace(r'.*股东权益合计.*不含少数股东权益.*','所有者权益合计',inplace=True, regex=True)
 
     # change the name of NaN header
     df.columns = df.columns.fillna('type')
@@ -55,6 +56,7 @@ def main(argv=None):
     # STAGE 1: OPEN
     # state the 3 filenames of the the 3 financial statements
     company_name = '深圳市元征科技股份有限公司'
+    db_name = 'cnLaunch2488'
     province = '广东'
     city = '深圳'
     industry = ['制造业','汽车','汽车后市场','物联网']
@@ -102,12 +104,15 @@ def main(argv=None):
     # merge ref:https://www.jianshu.com/p/bd188347f5b1
     result = pd.merge(df_t,df,on='科目名称')
     output_name = company_name + '_merge_statement.xlsx'
+    # Add new row
+    result.loc[result.shape[0]+1,'科目名称'] = company_name
+    result.fillna(0,inplace=True)
     result.to_excel(output_name,index=False)
 
     # Open database
     New_Client=MongoClient('localhost',27017)
     New_db = New_Client['BalanceSheets']
-    collection = New_db['cnLaunch2488']
+    collection = New_db[db_name]
 
     # iterrows() https://blog.csdn.net/Softdiamonds/article/details/80218777, 按行返回object，非常有用
     # i.e. content['科目名称'] 返回科目名称, idx 返回index 
