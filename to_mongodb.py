@@ -94,18 +94,19 @@ def main(argv=None):
     # 合并：搭积木。注意次序：资产负债表、损益表、现金流量表
     df = pd.concat([df_b,df_i,df_c], ignore_index = True,sort = False)
     df.fillna(0,inplace = True)
-    output_name = company_name + '_statement.xlsx'
+    output_name = company_name + '_clean_statement.xlsx'
     df.to_excel(output_name,index=False)
 
     # merge with template
     # merge ref:https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.merge.html
     # merge ref:https://www.jianshu.com/p/bd188347f5b1
     result = pd.merge(df_t,df,on='科目名称')
-    result.to_excel('merge.xlsx',index=False)
+    output_name = company_name + '_merge_statement.xlsx'
+    result.to_excel(output_name,index=False)
 
     # Open database
     New_Client=MongoClient('localhost',27017)
-    New_db = New_Client['BalanceSheet']
+    New_db = New_Client['BalanceSheets']
     collection = New_db['cnLaunch2488']
 
     # iterrows() https://blog.csdn.net/Softdiamonds/article/details/80218777, 按行返回object，非常有用
