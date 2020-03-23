@@ -1,5 +1,3 @@
-# clean the financial statements downloaded fron Wind and plot.
-
 #coding=utf-8
 import pandas as pd
 import pymongo
@@ -76,10 +74,22 @@ def main(argv=None):
     # sort columns, from old years to latest
     df = df.reindex(sorted(df.columns), axis=1)
     query_df=df.iloc[23]
-    plt.plot(query_df)
-    print(query_df)
+    year = list(query_df.index)
+    value = list(query_df)
+
+    tdf = pd.DataFrame(list(zip(year,value)),columns=['year','value'])
+
+    # select rows that are years with regex pattern
+    # ref:https://stackoverflow.com/questions/15325182/how-to-filter-rows-in-pandas-by-regex
+    tdf2 = tdf[tdf.year.str.contains(r'201.-12-31')]
+
+    # 线性图: tdf2.plot(x='year')
+    # 直方图：https://blog.csdn.net/Darkman_EX/article/details/80738021
+    # rotate x labels: https://stackoverflow.com/questions/32244019/how-to-rotate-x-axis-tick-labels-in-pandas-barplot
+    tdf2.plot(x='year',kind='bar',alpha=0.75, rot=0)
+
     plt.show()
-    #print(df.iloc[3])
+    
 
 ''' into standard
 
