@@ -8,6 +8,11 @@ import pandas as pd
 # 名义利率是6.7%，可设置
 # 每期还款现金流 = 当期还款本金 + 利息
 # 利息 = （本金 - 当期还款本金 * 期数）* （名义年利率*实际天数），其中实际天数 类似等于 = （30天/360 天）* 3 （一季）
+# -----
+# 程序实现思路
+# 通过 pandas.dataframe 列示相关数据，columns = ['期数','当期还款本金','利息','现金流']
+# 通过 numpy.irr 函数计算irr
+# irr * 频率（3，一季）= 实际 irr
 
 principal = 2e8
 rate = 0.67
@@ -64,10 +69,3 @@ print('\n')
 print('IRR:', form.format(irr_result))
 print('IRR, with no deposit:', form.format(irr_result_ori))
 print('\n')
-
-
-
-
-
-
-
