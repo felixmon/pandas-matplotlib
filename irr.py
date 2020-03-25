@@ -16,18 +16,19 @@ import pandas as pd
 
 pd.set_option('display.unicode.east_asian_width', True)
 
-principal = 2e8
-rate = 0.67
 
-# IRR
-# nominal annual rate
+# -----------------在此修改参数 parameters begin ---------------------------------
+# 本金
+principal = 2e8
+# 名义年利率 nominal annual rate
 rate_nominal = 0.067
-# deposit at the first installment
+# 保证金 以及 手续费等需要在第一期就支付的金额 deposit at the first installment
 deposit = 1e7 + 6.6e6
-# period in months
+# 月份数 period in months
 period = 36
-# 
+# 间隔，3 = 按季，2 = 半年， 1 = 年
 interval = 3
+# -----------------参数输入结束 parameters end -----------------------------------
 n = int(period / interval)
 n_index =[]
 for item in range(1,n+1):
