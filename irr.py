@@ -51,8 +51,13 @@ df['Principal Fixed']= premium_fixed # or form.format(premium_fixed)
 df['interest'] = 0
 df['Cash Flow'] = 0
 
+# 期数列以及每期本金列都是固定数值，已经计算好
+# 现在通过循环以计算利息以及每期现金流
 for idx,content in df.iterrows():
     # 每一期利率
+    # idx 返回每一行的 index
+    # content 返回每一行对应的所有列的内容
+    # 这里只用 index 的作用，以便逐行计算利息以及现金流
     result = (principal - premium_fixed * idx) * (rate_nominal*(periodic*interval))
     df.loc[idx,'interest'] = result
     df.loc[idx,'Cash Flow'] = df.loc[idx,'Principal Fixed'] + df.loc[idx,'interest']
@@ -60,7 +65,6 @@ for idx,content in df.iterrows():
     # format output
     # keep format and float type
     df.apply(pd.to_numeric,errors='coerce')
-
 
 print('\n', df)
 
@@ -93,4 +97,3 @@ print('\n')
 # IRR 是每期报酬率，不是年度回报率。IRR 是用来同样期限的投资组合，谁更划算。
 # IRR的参数并没有绝对日期，只有『一期』的观念。每一期可以是一年、一个月或一天，随著使用者自行定义。如果每一格是代表一个[月]的现金流量，那麽传回的报酬率就是[月报酬率]；如果每一格是代表一个『年』的现金流量，那麽传回的报酬率就是[年报酬率]。
 # 上述例子中, irr_result = np.irr(irr) * interval 就是求 年报酬率
-
