@@ -14,6 +14,8 @@ import pandas as pd
 # 通过 numpy.irr 函数计算irr
 # irr * 频率（3，一季）= 实际 irr
 
+pd.set_option('display.unicode.east_asian_width', True)
+
 principal = 2e8
 rate = 0.67
 
@@ -31,12 +33,19 @@ n_index =[]
 for item in range(1,n+1):
     n_index.append(item)
 
+# Finer Control: Display Values https://pandas.pydata.org/pandas-docs/stable/user_guide/style.html#Finer-Control:-Display-Values
 pd.options.display.float_format = '{:,.2f}'.format
-pd.set_option('display.width', 1000)
+
+# Python string format setting
 form = '{:,.2f}'
+
+# 每期归还本金等于本金除以期数
 premium_fixed = principal / n
-#premium_fixed = '{:,.2f}'.format(premium_fixed)
+
+# 期间基数，严格意义来讲应该等于实际天数
 periodic = 30/360
+
+# 构建 dataframe，4列
 df = pd.DataFrame(n_index,columns=['number'])
 df['Principal Fixed']= premium_fixed # or form.format(premium_fixed)
 df['interest'] = 0
@@ -52,20 +61,36 @@ for idx,content in df.iterrows():
     # keep format and float type
     df.apply(pd.to_numeric,errors='coerce')
 
+
 print('\n', df)
 
 # calculate IRR
 cash_flow = df['Cash Flow'] # return dtype pandas.series
+
+# 将 series 转换为 list 以便计算 irr
 irr = list(cash_flow)
 irr_ori = list(cash_flow)
+
+# 将初始值插入到首位，并调整为负值
 # insert at the beginning of the irr list
 principal_modified = -1 * (principal - deposit)
 irr.insert(0,principal_modified)
 irr_ori.insert(0,-1 * principal)
+
+# 设置为百分比显示（此时数值变为字符串格式化输出）
 form ='{:,.2%}'
+
+# 将单期 irr 变为年化 irr
 irr_result = np.irr(irr) * interval
 irr_result_ori = np.irr(irr_ori) * interval
+
+# 输出
 print('\n')
 print('IRR:', form.format(irr_result))
 print('IRR, with no deposit:', form.format(irr_result_ori))
 print('\n')
+
+# IRR 是每期报酬率，不是年度回报率。IRR 是用来同样期限的投资组合，谁更划算。
+# IRR的参数并没有绝对日期，只有『一期』的观念。每一期可以是一年、一个月或一天，随著使用者自行定义。如果每一格是代表一个[月]的现金流量，那麽传回的报酬率就是[月报酬率]；如果每一格是代表一个『年』的现金流量，那麽传回的报酬率就是[年报酬率]。
+# 上述例子中, irr_result = np.irr(irr) * interval 就是求 年报酬率
+
