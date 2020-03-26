@@ -93,6 +93,12 @@ irr_result = np.irr(irr) * interval
 irr_result_ori = np.irr(irr_ori) * interval
 
 # 输出
+# padding:
+# http://www.datasciencemadesimple.com/right-pad-in-pandas-dataframe-python-2/
+# https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.Series.str.pad.html
+# https://www.tutorialspoint.com/python/string_rjust.htm
+# https://stackoverflow.com/a/46098243/13130970
+# note that the column name will be changed after padding, thus raises KeyError if you want to use df['column name'] again.
 df.columns = df.columns.map(lambda x: str(x).rjust(20))
 #print(tabulate(df, headers='keys',floatfmt=",.2f"))
 print('\n', df)
