@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from tabulate import tabulate
 
 # 计算租赁公司租金 irr，或者满足：等额本金、利息递减且有保证金（及手续费）的还款计划的 irr
 # 等额本金，即每期还款本金固定，且等于本金 / 期数
@@ -14,7 +15,6 @@ import pandas as pd
 # 通过 numpy.irr 函数计算irr
 # irr * 频率（3，一季）= 实际 irr
 
-pd.set_option('display.unicode.east_asian_width', True)
 
 
 # -----------------在此修改参数 parameters begin ---------------------------------
@@ -67,7 +67,10 @@ for idx,content in df.iterrows():
     # keep format and float type
     df.apply(pd.to_numeric,errors='coerce')
 
-print('\n', df)
+# 输出列表
+#print(pd.__version__)
+#pd.set_option('display.width', 200)
+#pd.set_option('display.width', None)
 
 # calculate IRR
 cash_flow = df['Cash Flow'] # return dtype pandas.series
@@ -90,10 +93,14 @@ irr_result = np.irr(irr) * interval
 irr_result_ori = np.irr(irr_ori) * interval
 
 # 输出
+df.columns = df.columns.map(lambda x: str(x).rjust(20))
+#print(tabulate(df, headers='keys',floatfmt=",.2f"))
+print('\n', df)
 print('\n')
 print('IRR:', form.format(irr_result))
 print('IRR, with no deposit:', form.format(irr_result_ori))
 print('\n')
+
 
 # IRR 是每期报酬率，不是年度回报率。IRR 是用来同样期限的投资组合，谁更划算。
 # IRR的参数并没有绝对日期，只有『一期』的观念。每一期可以是一年、一个月或一天，随著使用者自行定义。如果每一格是代表一个[月]的现金流量，那麽传回的报酬率就是[月报酬率]；如果每一格是代表一个『年』的现金流量，那麽传回的报酬率就是[年报酬率]。
