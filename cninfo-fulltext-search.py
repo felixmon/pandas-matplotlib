@@ -3,20 +3,24 @@ import json
 import re
 import datetime
 import pandas as pd
+import urllib.parse
 
 # API address:http://www.cninfo.com.cn/new/fulltextSearch/full?searchkey=%E8%AF%89%E8%AE%BC&sdate=&edate=&isfulltext=false&sortName=pubdate&sortType=desc&pageNum=1
 
 # set page number start at 1, ends at 'Loop'
 pageNum = 1
-Loop = 50
+Loop = 100
+keyword = '理财'
 
 # create empty dataframe, later would be used to format the data and export to excel
 df = pd.DataFrame(columns=['Date','secCode','secName','Title','URL'])
 # start the loop
 df_row = 0
+# parse keyword
+keyword = urllib.parse.quote(keyword)
 
 for n in range(pageNum,Loop):
-    url = 'http://www.cninfo.com.cn/new/fulltextSearch/full?searchkey=%E8%AF%89%E8%AE%BC&sdate=&edate=&isfulltext=false&sortName=pubdate&sortType=desc&pageNum=' + str(n)
+    url = 'http://www.cninfo.com.cn/new/fulltextSearch/full?searchkey=' + keyword + '&sdate=&edate=&isfulltext=false&sortName=pubdate&sortType=desc&pageNum=' + str(n)
     r = requests.get(url=url)#return values in json format
     data = json.loads(r.text)
     length = len(data['announcements'])# all data are wrapped in 'announcements' level(node), so we need to loop them out
@@ -43,4 +47,6 @@ for n in range(pageNum,Loop):
         df.loc[df_row,'URL'] = secURL
         df_row += 1
 
-df.to_excel('lawsuit.xlsx',index=False)
+#df.to_excel('lawsuit.xlsx',index=False)
+filename = keyword + '.csv'
+df.to_csv(filename,index=False)
