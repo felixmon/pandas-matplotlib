@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 from tabulate import tabulate
 
+# IRR的前提是
+
 # 计算租赁公司租金 irr，或者满足：等额本金、利息递减且有保证金（及手续费）的还款计划的 irr
 # 等额本金，即每期还款本金固定，且等于本金 / 期数
 # 在按季付款的时候，时间!=(不等于)期数
@@ -18,79 +20,96 @@ from tabulate import tabulate
 
 
 # -----------------在此修改参数 parameters begin ---------------------------------
-# 本金
+# 本金，本金-保障金-费用=期初实际流出现金流
 principal = 2e8
-# 名义年利率 nominal annual rate
-rate_nominal = 0.067
-# 保证金 以及 手续费等需要在第一期就支付的金额 deposit at the first installment
-deposit = 1e7 + 6.6e6
+# 名义年利率 nominal annual rate，用于确定每期利息
+rate_nominal = 0.06175
+# 保证金，期末需要返回给客户，递减期末流入现金流
+deposit = 1e7
+# 手续费率，期初一次性收取
+fee_rate = 0.033
 # 月份数 period in months
 period = 36
-# 间隔，3 = 按季，2 = 半年， 1 = 年
-interval = 3
-# -----------------参数输入结束 parameters end -----------------------------------
-n = int(period / interval)
-n_index =[]
-for item in range(1,n+1):
-    n_index.append(item)
+# 复利次数 frequency of compouding per year，4 = 按季，2 = 半年， 1 = 年
+# 当 frequency = 4,意味这 12/4 = 3个月还本付息一次
+frequency = 4
 
+# -----------------参数输入结束 parameters end -----------------------------------
+# -----------------计算常量 begin -----------------------------------
+# 常量：
+# 每期固定归还的本金
+# 期数
+# 利息计算因子
+#----
+# 期数 = 频率 * 年
+number_of_intervals_of_timeline = int(frequency * (period/12))
+n = number_of_intervals_of_timeline
+# 每期归还本金等于本金除以期数，注意这里是一个trick，等额本金的等额不是根据t0期初实际获取贷款来计算，而是根据名义本金计算，这样会提高每一期FV（月供）
+premium_fixed = principal / n
+# 费用=本金*费率，一次性收取
+fee = int(principal * fee_rate)
+# 期初现金流=本金-保证金-费用
+initial_investment = principal - deposit - fee
+# 期初现金流属于流出现金流，为负数
+initial_investment = -1 * initial_investment
+# 利息实际天数基数，每年为360天，每月为30天
+# 12/frequency = 每一期多少个月，如果frequency 是4，那么每一期就是3个月
+# 30/360得出。。。？
+#base = int((12/frequency)*(30/360))
+# i.e. 12/4 = 3, 说明3个月还本付息一次
+interest_factor = int(12/frequency) *  (30/360)
+
+# -----------------计算常量 end -----------------------------------
+
+# 设置 dataframe 格式
 # Finer Control: Display Values https://pandas.pydata.org/pandas-docs/stable/user_guide/style.html#Finer-Control:-Display-Values
 pd.options.display.float_format = '{:,.2f}'.format
-
 # Python string format setting
 form = '{:,.2f}'
 
-# 每期归还本金等于本金除以期数
-premium_fixed = principal / n
-
-# 期间基数，严格意义来讲应该等于实际天数
-periodic = 30/360
 
 # 构建 dataframe，4列
+# 先构建单列：期数
+n_index =[]
+for item in range(0,n+1):
+    n_index.append(item)
+# 创建 dataframe
 df = pd.DataFrame(n_index,columns=['number'])
+
 df['Principal Fixed']= premium_fixed # or form.format(premium_fixed)
 df['interest'] = 0
 df['Cash Flow'] = 0
 
+# t0 期初现金流
+df.loc[0,'number']=0
+df.loc[0,'Principal Fixed']=0
+df.loc[0,'interest']=0
+df.loc[0,'Cash Flow']=initial_investment
+
 # 期数列以及每期本金列都是固定数值，已经计算好
 # 现在通过循环以计算利息以及每期现金流
-for idx,content in df.iterrows():
-    # 每一期利率
-    # idx 返回每一行的 index
-    # content 返回每一行对应的所有列的内容
-    # 这里只用 index 的作用，以便逐行计算利息以及现金流
-    result = (principal - premium_fixed * idx) * (rate_nominal*(periodic*interval))
-    df.loc[idx,'interest'] = result
-    df.loc[idx,'Cash Flow'] = df.loc[idx,'Principal Fixed'] + df.loc[idx,'interest']
+for idx in range(1,n+1):
+    # 已还本金 = 固定还款额 * （期数-1）
+    # 期间利率 = （名义本金 - 已还本金） * 名义利率 * 利息因子
+    periodic_interst = ((principal -premium_fixed*(idx-1)) * rate_nominal * interest_factor)
+    inflow = premium_fixed + periodic_interst
+    df.loc[idx,'interest'] = periodic_interst
+    df.loc[idx,'Cash Flow'] = inflow
 
-    # format output
-    # keep format and float type
-    df.apply(pd.to_numeric,errors='coerce')
-
-# 输出列表
-#print(pd.__version__)
-#pd.set_option('display.width', 200)
-#pd.set_option('display.width', None)
+# 期末归还本金
+df.loc[(n),'Cash Flow'] = df.loc[(n-1),'Cash Flow'] - deposit
 
 # calculate IRR
 cash_flow = df['Cash Flow'] # return dtype pandas.series
 
 # 将 series 转换为 list 以便计算 irr
 irr = list(cash_flow)
-irr_ori = list(cash_flow)
-
-# 将初始值插入到首位，并调整为负值
-# insert at the beginning of the irr list
-principal_modified = -1 * (principal - deposit)
-irr.insert(0,principal_modified)
-irr_ori.insert(0,-1 * principal)
 
 # 设置为百分比显示（此时数值变为字符串格式化输出）
 form ='{:,.2%}'
 
 # 将单期 irr 变为年化 irr
-irr_result = np.irr(irr) * interval
-irr_result_ori = np.irr(irr_ori) * interval
+irr_result = np.irr(irr) * frequency
 
 # 输出
 # padding:
@@ -100,14 +119,14 @@ irr_result_ori = np.irr(irr_ori) * interval
 # https://stackoverflow.com/a/46098243/13130970
 # note that the column name will be changed after padding, thus raises KeyError if you want to use df['column name'] again.
 df.columns = df.columns.map(lambda x: str(x).rjust(20))
-#print(tabulate(df, headers='keys',floatfmt=",.2f"))
+
 print('\n', df)
 print('\n')
+
+print('principal:','{:,.2f}'.format(principal))
+print('deposit:','{:,.2%}'.format(rate_nominal))
+print('deposit:','{:,.2f}'.format(deposit))
+print('fee:','{:,.2f}'.format(fee))
+print('initial investment:','{:,.2f}'.format(initial_investment))
 print('IRR:', form.format(irr_result))
-print('IRR, with no deposit:', form.format(irr_result_ori))
 print('\n')
-
-
-# IRR 是每期报酬率，不是年度回报率。IRR 是用来同样期限的投资组合，谁更划算。
-# IRR的参数并没有绝对日期，只有『一期』的观念。每一期可以是一年、一个月或一天，随著使用者自行定义。如果每一格是代表一个[月]的现金流量，那麽传回的报酬率就是[月报酬率]；如果每一格是代表一个『年』的现金流量，那麽传回的报酬率就是[年报酬率]。
-# 上述例子中, irr_result = np.irr(irr) * interval 就是求 年报酬率
