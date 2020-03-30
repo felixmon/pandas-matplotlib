@@ -124,7 +124,7 @@ print('\n', df)
 print('\n')
 
 print('principal:','{:,.2f}'.format(principal))
-print('deposit:','{:,.2%}'.format(rate_nominal))
+print('rate nominal:','{:,.2%}'.format(rate_nominal))
 print('deposit:','{:,.2f}'.format(deposit))
 print('fee:','{:,.2f}'.format(fee))
 print('initial investment:','{:,.2f}'.format(initial_investment))
