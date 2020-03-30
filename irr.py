@@ -118,14 +118,15 @@ irr_result = np.irr(irr) * frequency
 # https://stackoverflow.com/a/46098243/13130970
 # note that the column name will be changed after padding, thus raises KeyError if you want to use df['column name'] again.
 df.columns = df.columns.map(lambda x: str(x).rjust(20))
+df=df.to_string(index=False)
 
 print('\n', df)
 print('\n')
 
-print('principal:','{:,.2f}'.format(principal))
-print('rate nominal:','{:,.2%}'.format(rate_nominal))
-print('deposit:','{:,.2f}'.format(deposit))
-print('fee:','{:,.2f}'.format(fee))
-print('initial investment:','{:,.2f}'.format(initial_investment))
-print('IRR:', form.format(irr_result))
-print('\n')
+item_name = ['principal','rate nominal','deposit','fee','initial investment','IRR']
+item_values = ['{:,.2f}'.format(principal),'{:,.2%}'.format(rate_nominal),'{:,.2f}'.format(deposit),'{:,.2f}'.format(fee),'{:,.2f}'.format(initial_investment), form.format(irr_result)]
+
+df_2 = pd.DataFrame(zip(item_name,item_values))
+df_2 = df_2.to_string(index=False,header=False)
+
+print(df_2)
